@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10パズル・形合わせ版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background-color: #fdf2f8; 
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; 
+            touch-action: manipulation; 
+        }
+        /* 10の箱のスタイル */
+        .ten-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            background: #cbd5e1;
+            padding: 15px;
+            border-radius: 24px;
+            border: 6px solid #475569;
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.2);
+        }
+        .cell {
+            width: 60px; height: 60px;
+            background: white;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* ブロックの色 */
+        .filled-blue { background: #3b82f6; border: 3px solid #1d4ed8; box-shadow: 0 4px 0 #1e3a8a; }
+        .filled-orange { background: #fb923c; border: 3px solid #ea580c; box-shadow: 0 4px 0 #9a3412; }
+        
+        /* アニメーション */
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .sparkle { animation: sparkle 0.6s ease-in-out; }
+        @keyframes sparkle {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1) rotate(2deg); filter: brightness(1.4); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 select-none">
+
+<div id="game-container" class="bg-white p-8 md:p-12 rounded-[60px] shadow-2xl w-full max-w-2xl text-center border-b-[16px] border-gray-200">
+    
+    <!-- メニュー画面 -->
+    <div id="menu-screen" class="pop-in">
+        <h1 class="text-5xl font-black text-pink-500 mb-4 italic">10 PUZZLE</h1>
+        <div class="text-6xl mb-8">🧩</div>
+        <p class="text-2xl font-bold text-gray-600 mb-10">ぴったんこ はまるかな？</p>
+        <div class="flex flex-col gap-5">
+            <button onclick="startGame(3)" class="bg-green-400 text-white py-5 rounded-3xl text-3xl font-black shadow-[0_8px_0_#16a34a] hover:translate-y-1 hover:shadow-[0_4px_0_#16a34a] transition-all">3もん</button>
+            <button onclick="startGame(5)" class="bg-blue-400 text-white py-5 rounded-3xl text-3xl font-black shadow-[0_8px_0_#2563eb] hover:translate-y-1 hover:shadow-[0_4px_0_#2563eb] transition-all">5もん</button>
+            <button onclick="startGame(10)" class="bg-purple-400 text-white py-5 rounded-3xl text-3xl font-black shadow-[0_8px_0_#9333ea] hover:translate-y-1 hover:shadow-[0_4px_0_#9333ea] transition-all">10もん</button>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" class="hidden">
+        <div class="mb-6">
+            <div id="progress-dots" class="flex justify-center gap-2 mb-4"></div>
+            <span id="level-badge" class="inline-block bg-pink-500 text-white px-6 py-1.5 rounded-full text-lg font-black tracking-widest uppercase">LEVEL 1</span>
+            <h1 id="task-text" class="text-3xl font-black text-gray-800 mt-4 leading-relaxed">空いているところに<br>ぴったりの「形」をえらぼう！</h1>
+        </div>
+
+        <div class="flex flex-col items-center mb-8">
+            <div id="main-grid" class="ten-grid">
+                <!-- マス目はJSで生成 -->
+            </div>
+            <div class="mt-8">
+                <p id="hint-text" class="text-xl font-bold text-pink-700 bg-pink-50 px-8 py-3 rounded-full border-2 border-pink-100 shadow-sm inline-block">
+                    のこりの「かたち」はどれかな？
+                </p>
+            </div>
+        </div>
+
+        <!-- ブロック選択エリア -->
+        <div class="w-full flex flex-col gap-3">
+            <p class="text-xs font-black text-gray-400 tracking-[0.2em]">したから えらんでね</p>
+            <div id="block-area" class="flex justify-center gap-8 min-h-[160px] items-center bg-gray-50 p-6 rounded-[40px] border-4 border-dashed border-gray-200 overflow-x-auto">
+                <!-- ブロックはJSで生成 -->
+            </div>
+        </div>
+
+        <!-- 次へボタン -->
+        <div id="next-btn-area" class="mt-10 hidden pop-in">
+            <button onclick="nextLevel()" class="bg-green-500 text-white px-16 py-6 rounded-3xl font-black text-3xl shadow-[0_10px_0_#15803d] hover:bg-green-600 active:translate-y-2 active:shadow-none transition-all">つぎへ！ ➔</button>
+        </div>
+    </div>
+
+    <!-- リザルト画面 -->
+    <div id="result-screen" class="hidden pop-in">
+        <h2 class="text-5xl font-black text-orange-500 mb-6">おめでとう！</h2>
+        <div class="text-[100px] mb-8">🏆</div>
+        <p id="result-message" class="text-2xl font-bold text-gray-700 mb-10">ぜんぶ クリアしたよ！<br>きみは かたちのはかせだね！</p>
+        <button onclick="location.reload()" class="bg-pink-500 text-white px-12 py-6 rounded-3xl text-3xl font-black shadow-[0_10px_0_#be185d] hover:bg-pink-600 active:translate-y-2 active:shadow-none transition-all">もういちど あそぶ</button>
+    </div>
+</div>
+
+<script>
+    let totalQuestions = 0;
+    let currentLevelIdx = 0;
+    let filledCount = 0;
+    let currentInitial = 0;
+    let currentTarget = 0;
+
+    // ゲーム開始
+    function startGame(num) {
+        totalQuestions = num;
+        currentLevelIdx = 0;
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        initLevel();
+    }
+
+    // レベルの初期化
+    function initLevel() {
+        currentInitial = Math.floor(Math.random() * 9) + 1;
+        currentTarget = 10 - currentInitial;
+        filledCount = currentInitial;
+
+        document.getElementById('level-badge').innerText = `${currentLevelIdx + 1} / ${totalQuestions}`;
+        document.getElementById('hint-text').innerText = `あと ${currentTarget} マス！どれをはめる？`;
+        document.getElementById('hint-text').classList.remove('text-red-500');
+        document.getElementById('next-btn-area').classList.add('hidden');
+        
+        const dotsArea = document.getElementById('progress-dots');
+        dotsArea.innerHTML = '';
+        for(let i=0; i<totalQuestions; i++) {
+            const dot = document.createElement('div');
+            dot.className = `w-4 h-4 rounded-full ${i <= currentLevelIdx ? 'bg-pink-500' : 'bg-gray-200'}`;
+            dotsArea.appendChild(dot);
+        }
+        
+        renderGrid();
+        renderBlocks();
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('main-grid');
+        grid.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if (i < filledCount) {
+                cell.classList.add(i < currentInitial ? 'filled-blue' : 'filled-orange');
+            }
+            grid.appendChild(cell);
+        }
+    }
+
+    // 選択肢ブロックを描画
+    function renderBlocks() {
+        const area = document.getElementById('block-area');
+        area.innerHTML = '';
+        
+        // 正解の形（空いているマスのインデックス）
+        const correctIndices = [];
+        for (let i = currentInitial; i < 10; i++) correctIndices.push(i);
+
+        // 選択肢の作成
+        let choices = [{ val: currentTarget, indices: correctIndices, isCorrect: true }];
+
+        // 不正解の選択肢を追加
+        while(choices.length < 3) {
+            let r = Math.floor(Math.random() * 9) + 1;
+            if(!choices.find(c => c.val === r)) {
+                let dummyIndices = [];
+                for(let j=0; j<r; j++) dummyIndices.push(j);
+                choices.push({ val: r, indices: dummyIndices, isCorrect: false });
+            }
+        }
+        
+        choices.sort(() => Math.random() - 0.5);
+
+        choices.forEach(choice => {
+            const btn = createShapeBlock(choice);
+            btn.onclick = () => handleBlockClick(choice);
+            area.appendChild(btn);
+        });
+    }
+
+    function createShapeBlock(choice) {
+        const div = document.createElement('div');
+        div.className = "cursor-pointer transition-all flex flex-col items-center p-4 rounded-2xl hover:bg-white hover:shadow-xl active:scale-90 min-w-[100px]";
+        
+        const gridContainer = document.createElement('div');
+        gridContainer.className = "grid gap-1";
+        gridContainer.style.gridTemplateColumns = 'repeat(5, 20px)';
+        gridContainer.style.gridTemplateRows = 'repeat(2, 20px)';
+        
+        for (let i = 0; i < 10; i++) {
+            const dot = document.createElement('div');
+            dot.className = "w-[20px] h-[20px] rounded-sm";
+            if (choice.indices.includes(i)) {
+                dot.classList.add('filled-orange');
+            } else {
+                dot.style.background = "transparent";
+            }
+            gridContainer.appendChild(dot);
+        }
+        
+        div.appendChild(gridContainer);
+        const label = document.createElement('span');
+        label.innerText = choice.val;
+        label.className = "mt-4 font-black text-2xl text-orange-600 bg-orange-50 px-5 py-1 rounded-full border-2 border-orange-200 shadow-sm";
+        div.appendChild(label);
+        return div;
+    }
+
+    function handleBlockClick(choice) {
+        const grid = document.getElementById('main-grid');
+        const hintText = document.getElementById('hint-text');
+
+        if (choice.isCorrect) {
+            filledCount = 10;
+            renderGrid();
+            grid.classList.add('sparkle');
+            setTimeout(() => grid.classList.remove('sparkle'), 600);
+            
+            hintText.innerText = "すごーい！ぴったんこ！ ✨";
+            document.getElementById('next-btn-area').classList.remove('hidden');
+            document.getElementById('block-area').innerHTML = '<div class="text-6xl animate-bounce">🎨🧩✨</div>';
+        } else {
+            grid.classList.add('shake');
+            setTimeout(() => grid.classList.remove('shake'), 400);
+            hintText.innerText = "かたちが ちがうみたい…？";
+            hintText.classList.add('text-red-500');
+            setTimeout(() => {
+                hintText.classList.remove('text-red-500');
+            }, 1000);
+        }
+    }
+
+    function nextLevel() {
+        currentLevelIdx++;
+        if (currentLevelIdx >= totalQuestions) {
+            showResult();
+        } else {
+            initLevel();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('result-message').innerHTML = `${totalQuestions}もん ぜんぶクリア！<br>かたちをみるのが とてもじょうずだね！`;
+    }
+</script>
+
+</body>
+</html>
