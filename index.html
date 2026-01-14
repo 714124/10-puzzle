@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>10パズル・形合わせ</title>
+    <title>10パズル・形合わせ（完全版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
@@ -17,34 +17,41 @@
             height: 100svh;
             display: flex;
             flex-direction: column;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        /* メインエリアをスクロールさせないように調整 */
-        .content-area {
+        /* メインコンテナ：横画面の時は横並びにする */
+        .game-layout {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 10px 15px;
-            max-width: 500px;
-            margin: 0 auto;
+            justify-content: space-evenly;
+            align-items: center;
             width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        /* 10の箱のスタイル（サイズをiPhone向けに最適化） */
+        @media (orientation: landscape) {
+            .game-layout {
+                flex-direction: row;
+                gap: 20px;
+            }
+            .header-area { width: 100%; position: absolute; top: 10px; }
+        }
+
+        /* 10の箱 */
         .ten-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 6px;
+            gap: 8px;
             background: #cbd5e1;
-            padding: 10px;
-            border-radius: 18px;
-            border: 4px solid #475569;
-            width: 100%;
-            max-width: 300px;
+            padding: 12px;
+            border-radius: 20px;
+            border: 5px solid #475569;
+            width: 90vw;
+            max-width: 350px;
             aspect-ratio: 5 / 2;
         }
 
@@ -54,23 +61,24 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .filled-blue { background: #3b82f6; border: 2px solid #1d4ed8; box-shadow: 0 2px 0 #1e3a8a; }
-        .filled-orange { background: #fb923c; border: 2px solid #ea580c; box-shadow: 0 2px 0 #9a3412; }
+        .filled-blue { background: #3b82f6; border: 2px solid #1d4ed8; box-shadow: 0 3px 0 #1e3a8a; }
+        .filled-orange { background: #fb923c; border: 2px solid #ea580c; box-shadow: 0 3px 0 #9a3412; }
 
-        /* 選択肢エリア */
+        /* 選択肢ボタン */
         .block-choice {
             background: #ffffff;
             border: 2px solid #e2e8f0;
-            border-radius: 15px;
-            padding: 8px;
+            border-radius: 18px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 4px 0 #cbd5e1;
+            box-shadow: 0 5px 0 #cbd5e1;
             transition: all 0.1s;
+            min-width: 80px;
         }
         .block-choice:active {
-            transform: translateY(2px);
+            transform: translateY(3px);
             box-shadow: 0 2px 0 #cbd5e1;
         }
 
@@ -86,204 +94,53 @@
         .sparkle { animation: sparkle 0.5s ease-in-out; }
         @keyframes sparkle {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); filter: brightness(1.2); }
+            50% { transform: scale(1.08); filter: brightness(1.2); }
         }
         
-        #overlay { background: rgba(255, 255, 255, 0.95); }
+        #overlay { background: rgba(255, 255, 255, 0.98); }
+        .mode-btn { @apply text-white py-4 rounded-3xl text-2xl font-black shadow-lg active:scale-95 transition-transform; }
     </style>
 </head>
 <body>
 
-<div id="game-container" class="content-area">
-    
-    <div class="text-center pt-2">
-        <h1 class="text-2xl font-black text-pink-500 italic leading-none">10 PUZZLE</h1>
-        <div id="progress-dots" class="flex justify-center gap-1 mt-2"></div>
+    <div class="header-area text-center pt-2">
+        <h1 class="text-2xl font-black text-pink-500 italic">10 PUZZLE</h1>
+        <div id="progress-dots" class="flex justify-center gap-1.5 mt-1"></div>
     </div>
 
-    <div id="game-screen" class="flex flex-col items-center gap-4">
-        <div class="text-center">
-            <span id="level-badge" class="bg-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold">LEVEL 1</span>
-            <p id="hint-text" class="text-lg font-bold text-gray-700 mt-2">あといくつかな？</p>
-        </div>
-
-        <div id="main-grid" class="ten-grid">
+    <div id="game-layout" class="game-layout">
+        <div class="flex flex-col items-center gap-4">
+            <div class="text-center">
+                <span id="level-badge" class="bg-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">LEVEL 1</span>
+                <p id="hint-text" class="text-xl font-bold text-gray-700 mt-2">あといくつかな？</p>
             </div>
+            <div id="main-grid" class="ten-grid"></div>
+        </div>
         
-        <div class="w-full">
-            <p class="text-[10px] font-black text-gray-400 text-center mb-2">ぴったりな かたちを えらんでね</p>
-            <div id="block-area" class="flex justify-center gap-3">
+        <div class="flex flex-col items-center gap-4 w-full max-w-[350px]">
+            <div id="block-area" class="flex justify-center gap-3 w-full">
                 </div>
-        </div>
-    </div>
-
-    <div id="next-btn-area" class="hidden text-center pb-4">
-        <button onclick="nextLevel()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-2xl shadow-[0_6px_0_#15803d] active:transform active:scale-95">つぎへ！ ➔</button>
-    </div>
-</div>
-
-<div id="overlay" class="fixed inset-0 z-50 flex items-center justify-center p-6">
-    <div id="modal-content" class="text-center w-full max-w-sm">
-        <div id="menu-screen">
-            <div class="text-6xl mb-4">🧩</div>
-            <h2 class="text-3xl font-black text-gray-800 mb-2">10パズル</h2>
-            <p class="text-gray-500 mb-8 font-bold">ぴったんこ はまるかな？</p>
-            <div class="flex flex-col gap-4">
-                <button onclick="startGame(3)" class="bg-green-400 text-white py-4 rounded-2xl text-2xl font-black shadow-[0_6px_0_#16a34a] active:scale-95">3もん</button>
-                <button onclick="startGame(5)" class="bg-blue-400 text-white py-4 rounded-2xl text-2xl font-black shadow-[0_6px_0_#2563eb] active:scale-95">5もん</button>
+            <div id="next-btn-area" class="hidden w-full">
+                <button onclick="nextLevel()" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black text-2xl shadow-[0_6px_0_#15803d] active:translate-y-1 active:shadow-none">つぎへ！ ➔</button>
             </div>
         </div>
-
-        <div id="result-screen" class="hidden">
-            <div class="text-7xl mb-4">🏆</div>
-            <h2 class="text-4xl font-black text-orange-500 mb-4">おめでとう！</h2>
-            <p id="result-message" class="text-lg font-bold text-gray-600 mb-8"></p>
-            <button onclick="location.reload()" class="bg-pink-500 text-white w-full py-4 rounded-2xl text-2xl font-black shadow-[0_6px_0_#be185d]">もういちど</button>
-        </div>
     </div>
-</div>
 
-<script>
-    let totalQuestions = 0;
-    let currentLevelIdx = 0;
-    let currentInitial = 0;
-    let currentTarget = 0;
-    let isCleared = false;
+    <div id="overlay" class="fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div id="modal-content" class="text-center w-full max-w-sm">
+            <div id="menu-screen">
+                <div class="text-6xl mb-4">🧩</div>
+                <h2 class="text-4xl font-black text-gray-800 mb-2">10パズル</h2>
+                <p class="text-gray-500 mb-8 font-bold">なんもん ちょうせんする？</p>
+                <div class="flex flex-col gap-4">
+                    <button onclick="startGame(3)" class="mode-btn bg-green-400 shadow-[0_6px_0_#16a34a]">3もん</button>
+                    <button onclick="startGame(5)" class="mode-btn bg-blue-400 shadow-[0_6px_0_#2563eb]">5もん</button>
+                    <button onclick="startGame(10)" class="mode-btn bg-purple-400 shadow-[0_6px_0_#9333ea]">10もん</button>
+                </div>
+            </div>
 
-    const mainGrid = document.getElementById('main-grid');
-    const blockArea = document.getElementById('block-area');
-    const overlay = document.getElementById('overlay');
-    const nextBtnArea = document.getElementById('next-btn-area');
-
-    function startGame(num) {
-        totalQuestions = num;
-        currentLevelIdx = 0;
-        document.getElementById('menu-screen').classList.add('hidden');
-        overlay.classList.add('hidden');
-        initLevel();
-    }
-
-    function initLevel() {
-        isCleared = false;
-        currentInitial = Math.floor(Math.random() * 8) + 1; // 1~8
-        currentTarget = 10 - currentInitial;
-
-        document.getElementById('level-badge').innerText = `だい ${currentLevelIdx + 1} もん / ${totalQuestions}`;
-        document.getElementById('hint-text').innerText = `あと ${currentTarget} マス！どれかな？`;
-        document.getElementById('hint-text').style.color = '#374151';
-        nextBtnArea.classList.add('hidden');
-        
-        updateProgressDots();
-        renderGrid(currentInitial);
-        renderChoices();
-    }
-
-    function updateProgressDots() {
-        const dotsArea = document.getElementById('progress-dots');
-        dotsArea.innerHTML = '';
-        for(let i=0; i<totalQuestions; i++) {
-            const dot = document.createElement('div');
-            dot.className = `w-3 h-3 rounded-full ${i <= currentLevelIdx ? 'bg-pink-500' : 'bg-gray-300'}`;
-            dotsArea.appendChild(dot);
-        }
-    }
-
-    function renderGrid(count) {
-        mainGrid.innerHTML = '';
-        for (let i = 0; i < 10; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            if (i < count) {
-                cell.classList.add(i < currentInitial ? 'filled-blue' : 'filled-orange');
-            }
-            mainGrid.appendChild(cell);
-        }
-    }
-
-    function renderChoices() {
-        blockArea.innerHTML = '';
-        let choices = [{ val: currentTarget, isCorrect: true }];
-        
-        while(choices.length < 3) {
-            let r = Math.floor(Math.random() * 9) + 1;
-            if(!choices.find(c => c.val === r)) {
-                choices.push({ val: r, isCorrect: false });
-            }
-        }
-        choices.sort(() => Math.random() - 0.5);
-
-        choices.forEach(choice => {
-            const btn = document.createElement('button');
-            btn.className = 'block-choice';
-            
-            // ミニグリッド描画
-            const mini = document.createElement('div');
-            mini.className = 'mini-grid';
-            // 空きマスの場所から始まるように indices を計算
-            const indices = [];
-            for(let i=0; i<choice.val; i++) indices.push(currentInitial + i);
-
-            for (let i = 0; i < 10; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'mini-dot';
-                if (i >= currentInitial && i < currentInitial + choice.val) {
-                    dot.classList.add('filled-orange');
-                } else {
-                    dot.style.background = '#f1f5f9';
-                }
-                mini.appendChild(dot);
-            }
-            
-            btn.appendChild(mini);
-            const label = document.createElement('span');
-            label.className = 'text-xl font-black text-orange-600 mt-1';
-            label.innerText = choice.val;
-            btn.appendChild(label);
-            
-            btn.onclick = () => handleChoice(choice);
-            blockArea.appendChild(btn);
-        });
-    }
-
-    function handleChoice(choice) {
-        if (isCleared) return;
-        
-        if (choice.isCorrect) {
-            isCleared = true;
-            renderGrid(10);
-            mainGrid.classList.add('sparkle');
-            setTimeout(() => mainGrid.classList.remove('sparkle'), 500);
-            
-            document.getElementById('hint-text').innerText = "ぴったんこ！ ✨";
-            document.getElementById('hint-text').style.color = "#10b981";
-            blockArea.innerHTML = '<div class="text-4xl animate-bounce">✨👏✨</div>';
-            nextBtnArea.classList.remove('hidden');
-        } else {
-            document.getElementById('hint-text').innerText = "あれれ？ちがうみたい";
-            document.getElementById('hint-text').style.color = "#ef4444";
-            // 揺れる演出
-            mainGrid.style.transform = "translateX(5px)";
-            setTimeout(() => mainGrid.style.transform = "translateX(-5px)", 50);
-            setTimeout(() => mainGrid.style.transform = "translateX(0)", 100);
-        }
-    }
-
-    function nextLevel() {
-        currentLevelIdx++;
-        if (currentLevelIdx >= totalQuestions) {
-            showResult();
-        } else {
-            initLevel();
-        }
-    }
-
-    function showResult() {
-        overlay.classList.remove('hidden');
-        document.getElementById('menu-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('result-message').innerText = `${totalQuestions}もん ぜんぶクリアしたよ！\nきみは かたちの はかせだね！`;
-    }
-</script>
-
-</body>
-</html>
+            <div id="result-screen" class="hidden">
+                <div class="text-7xl mb-4">🏆</div>
+                <h2 class="text-4xl font-black text-orange-500 mb-4">おめでとう！</h2>
+                <p id="result-message" class="text-xl font-bold text-gray-600 mb-10"></p>
+                <button onclick="location.reload()" class="bg-pink-500 text-white w-full py-5 rounded-3xl text-3xl font-black shadow-[0_8px_0_#be185d]">もういちど</button>
