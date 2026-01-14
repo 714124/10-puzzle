@@ -2,187 +2,262 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10パズル掲示用ポスター</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>10パズル・形合わせ（修正版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #f1f5f9;
-            font-family: 'M PLUS Rounded 1c', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* A4 aspect ratio container */
-        .poster-container {
-            width: 794px;
-            height: 1123px;
-            background: white;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
-            position: relative;
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
+        
+        body { 
+            background-color: #fdf2f8; 
+            font-family: 'Fredoka', 'Hiragino Maru Gothic ProN', sans-serif;
+            touch-action: manipulation; 
+            overflow: hidden;
+            height: 100vh;
+            height: 100svh;
             display: flex;
             flex-direction: column;
-            padding: 50px 60px;
-            box-sizing: border-box;
-            border-top: 25px solid #ec4899;
-            overflow: hidden;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        .poster-container::after {
-            content: '';
-            position: absolute;
-            bottom: -100px;
-            right: -100px;
-            width: 300px;
-            height: 300px;
-            background: #fdf2f8;
-            border-radius: 50%;
-            z-index: 0;
-        }
-
-        #qrcode img {
+        .game-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
             margin: 0 auto;
-            border: 10px solid #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        @media (orientation: landscape) {
+            .game-layout { flex-direction: row; gap: 20px; }
+            .header-area { width: 100%; position: absolute; top: 10px; }
+        }
+
+        .ten-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+            background: #cbd5e1;
+            padding: 12px;
             border-radius: 20px;
+            border: 5px solid #475569;
+            width: 85vw;
+            max-width: 320px;
+            aspect-ratio: 5 / 2;
         }
 
-        .step-card {
-            background: #f8fafc;
-            border-radius: 24px;
-            padding: 20px 25px;
+        .cell { background: white; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .filled-blue { background: #3b82f6; border: 2px solid #1d4ed8; box-shadow: 0 3px 0 #1e3a8a; }
+        .filled-orange { background: #fb923c; border: 2px solid #ea580c; box-shadow: 0 3px 0 #9a3412; }
+
+        .block-choice {
+            background: #ffffff;
             border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 10px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 20px;
-            z-index: 10;
+            box-shadow: 0 5px 0 #cbd5e1;
+            min-width: 85px;
+            cursor: pointer;
         }
 
-        .step-num {
-            background: #ec4899;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
+        .mini-grid { display: grid; grid-template-columns: repeat(5, 12px); grid-template-rows: repeat(2, 12px); gap: 2px; }
+        .mini-dot { width: 12px; height: 12px; border-radius: 2px; }
 
-        .url-text {
-            background: #f1f5f9;
-            color: #1e293b;
-            padding: 12px 24px;
-            border-radius: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.4rem;
-            font-weight: bold;
-            border: 2px solid #cbd5e1;
-            display: inline-block;
-            margin-top: 15px;
-        }
-
-        @media print {
-            body { 
-                background: white; 
-                padding: 0; 
-                margin: 0;
-            }
-            .poster-container { 
-                box-shadow: none; 
-                width: 100%; 
-                height: 100vh; 
-                padding: 60px;
-                border-top-width: 30px;
-            }
-            .no-print { display: none; }
-        }
+        .sparkle { animation: sparkle 0.5s ease-in-out; }
+        @keyframes sparkle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); filter: brightness(1.2); } }
+        
+        #overlay { background: rgba(255, 255, 255, 0.98); }
+        .mode-btn { @apply text-white py-5 rounded-3xl text-3xl font-black shadow-lg transition-all; cursor: pointer; }
+        .mode-btn:active { transform: scale(0.95); opacity: 0.9; }
     </style>
 </head>
 <body>
 
-<div class="poster-container">
-    <!-- Header -->
-    <div class="text-center z-10">
-        <div class="text-7xl mb-4">🧩</div>
-        <h1 class="text-7xl font-extrabold text-gray-800 tracking-tight mb-2">
-            <span class="text-pink-500 italic">10</span> PUZZLE
-        </h1>
-        <p class="text-3xl text-gray-500 font-bold mb-10">～ 10の「相棒」をみつけよう！ ～</p>
+    <div class="header-area text-center pt-2">
+        <h1 class="text-2xl font-black text-pink-500 italic">10 PUZZLE</h1>
+        <div id="progress-dots" class="flex justify-center gap-1.5 mt-1"></div>
     </div>
 
-    <!-- QR Section -->
-    <div class="flex-grow flex flex-col items-center justify-center z-10">
-        <div class="bg-pink-50 p-10 rounded-[50px] border-4 border-dashed border-pink-200 mb-8">
-            <div id="qrcode"></div>
+    <div id="game-layout" class="game-layout">
+        <div class="flex flex-col items-center gap-4">
+            <div class="text-center">
+                <span id="level-badge" class="bg-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">LEVEL 1</span>
+                <p id="hint-text" class="text-xl font-bold text-gray-700 mt-2">あといくつかな？</p>
+            </div>
+            <div id="main-grid" class="ten-grid"></div>
         </div>
         
-        <p class="text-2xl font-bold text-gray-400 mb-4">カメラでよみとるか、URLをいれてね！</p>
-        
-        <div class="url-text">
-            https://714124.github.io/10-puzzle/
-        </div>
-
-        <p class="text-3xl font-black text-pink-600 mt-10 animate-bounce">
-            いますぐ あそべるよ！ ✨
-        </p>
-    </div>
-
-    <!-- Steps -->
-    <div class="grid gap-5 z-10 mt-6">
-        <div class="step-card">
-            <div class="step-num">1</div>
-            <p class="text-xl font-bold text-gray-700">カメラをかざすか、URLをブラウザにうつ</p>
-        </div>
-        <div class="step-card">
-            <div class="step-num">2</div>
-            <p class="text-xl font-bold text-gray-700">ページがひらいたらゲームスタート！</p>
-        </div>
-        <div class="step-card">
-            <div class="step-num">3</div>
-            <p class="text-xl font-bold text-gray-700">めざせ！ 10パズル・マスター！</p>
+        <div class="flex flex-col items-center gap-4 w-full max-w-[350px]">
+            <div id="block-area" class="flex justify-center gap-3 w-full"></div>
+            <div id="next-btn-area" class="hidden w-full px-4">
+                <button id="next-button" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black text-2xl shadow-[0_6px_0_#15803d]">つぎへ！ ➔</button>
+            </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <div class="mt-12 pt-8 border-t-4 border-gray-100 flex justify-between items-center z-10">
-        <div>
-            <p class="text-lg font-bold text-gray-400">プログラミング：714124</p>
-        </div>
-        <div class="text-pink-100 text-5xl">🎨🧩✨</div>
-    </div>
-</div>
+    <div id="overlay" class="fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div class="text-center w-full max-w-sm">
+            <div id="menu-screen">
+                <div class="text-6xl mb-4">🧩</div>
+                <h2 class="text-4xl font-black text-gray-800 mb-2">10パズル</h2>
+                <p class="text-gray-500 mb-8 font-bold">なんもん ちょうせんする？</p>
+                <div class="flex flex-col gap-5">
+                    <button class="mode-btn bg-green-400 shadow-[0_6px_0_#16a34a]" data-num="3">3もん</button>
+                    <button class="mode-btn bg-blue-400 shadow-[0_6px_0_#2563eb]" data-num="5">5もん</button>
+                    <button class="mode-btn bg-purple-400 shadow-[0_6px_0_#9333ea]" data-num="10">10もん</button>
+                </div>
+            </div>
 
-<!-- Print Button -->
-<button onclick="window.print()" class="no-print fixed bottom-10 right-10 bg-pink-500 text-white px-10 py-5 rounded-full font-bold shadow-2xl hover:bg-pink-600 transition-all text-xl">
-    🖨️ ポスターを印刷する
-</button>
+            <div id="result-screen" class="hidden">
+                <div class="text-7xl mb-4">🏆</div>
+                <h2 class="text-4xl font-black text-orange-500 mb-4">おめでとう！</h2>
+                <p id="result-message" class="text-xl font-bold text-gray-600 mb-10"></p>
+                <button id="reload-button" class="bg-pink-500 text-white w-full py-5 rounded-3xl text-3xl font-black shadow-[0_8px_0_#be185d]">もういちど</button>
+            </div>
+        </div>
+    </div>
 
 <script>
-    window.onload = function() {
-        const qrContainer = document.getElementById("qrcode");
-        qrContainer.innerHTML = "";
-        new QRCode(qrContainer, {
-            text: "https://714124.github.io/10-puzzle/",
-            width: 320,
-            height: 320,
-            colorDark : "#1e293b",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
+    let totalQuestions = 0;
+    let currentLevelIdx = 0;
+    let currentInitial = 0;
+    let currentTarget = 0;
+    let isCleared = false;
+
+    const mainGrid = document.getElementById('main-grid');
+    const blockArea = document.getElementById('block-area');
+    const overlay = document.getElementById('overlay');
+    const nextBtnArea = document.getElementById('next-btn-area');
+
+    // iPhoneで確実にクリックに反応させるための関数
+    function attachClick(idOrEl, fn) {
+        const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+        if (!el) return;
+        el.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            fn();
         });
     }
-</script>
 
+    // ゲーム開始処理
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        attachClick(btn, () => {
+            totalQuestions = parseInt(btn.getAttribute('data-num'));
+            currentLevelIdx = 0;
+            document.getElementById('menu-screen').classList.add('hidden');
+            overlay.classList.add('hidden');
+            initLevel();
+        });
+    });
+
+    function initLevel() {
+        isCleared = false;
+        currentInitial = Math.floor(Math.random() * 8) + 1; 
+        currentTarget = 10 - currentInitial;
+
+        document.getElementById('level-badge').innerText = `だい ${currentLevelIdx + 1} もん / ${totalQuestions}`;
+        document.getElementById('hint-text').innerText = `あと ${currentTarget} マス！どれかな？`;
+        document.getElementById('hint-text').style.color = '#374151';
+        nextBtnArea.classList.add('hidden');
+        blockArea.classList.remove('hidden');
+        
+        updateProgressDots();
+        renderGrid(currentInitial);
+        renderChoices();
+    }
+
+    function updateProgressDots() {
+        const dotsArea = document.getElementById('progress-dots');
+        dotsArea.innerHTML = '';
+        for(let i=0; i<totalQuestions; i++) {
+            const dot = document.createElement('div');
+            dot.className = `w-3 h-3 rounded-full ${i <= currentLevelIdx ? 'bg-pink-500' : 'bg-gray-300'}`;
+            dotsArea.appendChild(dot);
+        }
+    }
+
+    function renderGrid(count) {
+        mainGrid.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if (i < count) cell.classList.add(i < currentInitial ? 'filled-blue' : 'filled-orange');
+            mainGrid.appendChild(cell);
+        }
+    }
+
+    function renderChoices() {
+        blockArea.innerHTML = '';
+        let choices = [{ val: currentTarget, isCorrect: true }];
+        while(choices.length < 3) {
+            let r = Math.floor(Math.random() * 9) + 1;
+            if(!choices.find(c => c.val === r)) choices.push({ val: r, isCorrect: false });
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        choices.forEach(choice => {
+            const btn = document.createElement('div');
+            btn.className = 'block-choice';
+            const mini = document.createElement('div');
+            mini.className = 'mini-grid';
+            for (let i = 0; i < 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'mini-dot';
+                if (i >= currentInitial && i < currentInitial + choice.val) dot.classList.add('filled-orange');
+                else dot.style.background = '#f1f5f9';
+                mini.appendChild(dot);
+            }
+            btn.appendChild(mini);
+            const label = document.createElement('span');
+            label.className = 'text-2xl font-black text-orange-600 mt-1';
+            label.innerText = choice.val;
+            btn.appendChild(label);
+            
+            attachClick(btn, () => handleChoice(choice));
+            blockArea.appendChild(btn);
+        });
+    }
+
+    function handleChoice(choice) {
+        if (isCleared) return;
+        if (choice.isCorrect) {
+            isCleared = true;
+            renderGrid(10);
+            mainGrid.classList.add('sparkle');
+            setTimeout(() => mainGrid.classList.remove('sparkle'), 500);
+            document.getElementById('hint-text').innerText = "ぴったんこ！ ✨";
+            document.getElementById('hint-text').style.color = "#10b981";
+            blockArea.classList.add('hidden');
+            nextBtnArea.classList.remove('hidden');
+        } else {
+            document.getElementById('hint-text').innerText = "あれれ？ちがうみたい";
+            document.getElementById('hint-text').style.color = "#ef4444";
+            mainGrid.style.transform = "translateX(8px)";
+            setTimeout(() => mainGrid.style.transform = "translateX(-8px)", 50);
+            setTimeout(() => mainGrid.style.transform = "translateX(0)", 100);
+        }
+    }
+
+    attachClick('next-button', () => {
+        currentLevelIdx++;
+        if (currentLevelIdx >= totalQuestions) showResult();
+        else initLevel();
+    });
+
+    attachClick('reload-button', () => location.reload());
+
+    function showResult() {
+        overlay.classList.remove('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('result-message').innerText = `${totalQuestions}もん ぜんぶクリア！\n10の はかせだね！`;
+    }
+</script>
 </body>
 </html>
