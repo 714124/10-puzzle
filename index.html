@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>10パズル・形合わせ（効果音付き）</title>
+    <title>10パズル・形合わせ（効果音版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
@@ -48,7 +48,6 @@
             width: 85vw;
             max-width: 320px;
             aspect-ratio: 5 / 2;
-            transition: transform 0.1s;
         }
 
         .cell { background: white; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
@@ -72,27 +71,4 @@
         .mini-dot { width: 12px; height: 12px; border-radius: 2px; }
 
         .sparkle { animation: sparkle 0.5s ease-in-out; }
-        @keyframes sparkle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); filter: brightness(1.2); } }
-        
-        #overlay { background: rgba(255, 255, 255, 0.98); }
-        .mode-btn { @apply text-white py-5 rounded-3xl text-3xl font-black shadow-lg transition-all; cursor: pointer; }
-        .mode-btn:active { transform: scale(0.95); opacity: 0.9; }
-    </style>
-</head>
-<body>
-
-    <div class="header-area text-center pt-2">
-        <h1 class="text-2xl font-black text-pink-500 italic">10 PUZZLE</h1>
-        <div id="progress-dots" class="flex justify-center gap-1.5 mt-1"></div>
-    </div>
-
-    <div id="game-layout" class="game-layout">
-        <div class="flex flex-col items-center gap-4">
-            <div class="text-center">
-                <span id="level-badge" class="bg-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">LEVEL 1</span>
-                <p id="hint-text" class="text-xl font-bold text-gray-700 mt-2">あといくつかな？</p>
-            </div>
-            <div id="main-grid" class="ten-grid"></div>
-        </div>
-        
-        <div class="flex flex-col items-center gap-4
+        @keyframes sparkle { 0%, 100% { transform: scale(1); }
